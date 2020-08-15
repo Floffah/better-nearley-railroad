@@ -34,7 +34,7 @@ export default function railroad(grammar: any, out: string, opts: any) {
 
     diagrams.push(...traceandgram(rules, grammar.ParserStart, [], false));
 
-    diagrams = array_move(diagrams, diagrams.length - 1, 0);
+    diagrams.reverse();
 
     diagrams[0].comment = "- Start";
 
@@ -86,7 +86,9 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                         toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                     }
                 } else if (symbol.type) {
-                    bits.push(rr.Terminal(symbol.type));
+                    bits.push(rr.NonTerminal(symbol.type + " (lexer)"));
+                } else if(symbol.literal) {
+                    bits.push(rr.Terminal(symbol.literal));
                 }
             }
         } else if (rule.length > 1) {
@@ -108,7 +110,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                             toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                         }
                     } else if (symbol.type) {
-                        topush.push(rr.NonTerminal(symbol.type));
+                        topush.push(rr.NonTerminal(symbol.type + " (lexer)"));
                     } else if(symbol.literal) {
                         topush.push(rr.Terminal(symbol.literal));
                     }
@@ -154,16 +156,3 @@ export function isJson(data: string): boolean {
     }
     return true;
 }
-
-// VVVVV https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another VVVVV
-export function array_move(arr: any[], old_index: number, new_index: number) {
-    if (new_index >= arr.length) {
-        var k = new_index - arr.length + 1;
-        while (k--) {
-            arr.push(undefined);
-        }
-    }
-    arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
-    return arr; // for testing
-}
-// ^^^^^ https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another ^^^^^
