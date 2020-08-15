@@ -108,7 +108,9 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                             toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                         }
                     } else if (symbol.type) {
-                        topush.push(rr.Terminal(symbol.type));
+                        topush.push(rr.NonTerminal(symbol.type));
+                    } else if(symbol.literal) {
+                        topush.push(rr.Terminal(symbol.literal));
                     }
                 });
                 bitss.push(rr.Sequence(...topush));
@@ -140,7 +142,7 @@ interface options {
 
 interface parserrule {
     name: string,
-    symbols: (string | { type: string })[],
+    symbols: (string | { literal: string, type: string } )[],
     postprocess: (d: string[]) => any
 }
 
