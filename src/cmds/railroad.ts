@@ -42,10 +42,21 @@ export default function railroad(grammar: any, out: string, opts: any) {
 function traceandgram(rules: Map<string, parserrule>, start: string): diagram[] {
     let toreturn: diagram[] = [];
 
+    // @ts-ignore
+    let rule = rules.get(start);
+
+    let argbase: any[] = [];
+
+    // @ts-ignore
+    rule.symbols.forEach(symbol => {
+        if(typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
+            argbase.push(rr.NonTerminal(symbol));
+        }
+    })
+
     toreturn.push({
         name: "test",
-        // @ts-ignore
-        diagram: rr.Diagram(rr.Terminal(rules.get(start).name)).toString()
+        diagram: rr.Diagram(...argbase).toString()
     });
 
     return toreturn;
@@ -62,8 +73,8 @@ interface options {
 
 interface parserrule {
     name: string,
-    symbols: (string | boolean | symboltype | any)[],
-    postprocess: (d: any[]) => any
+    symbols: (string | boolean | symboltype)[],
+    postprocess: (d: string[]) => any
 }
 
 interface symboltype {
