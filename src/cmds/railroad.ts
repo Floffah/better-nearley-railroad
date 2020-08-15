@@ -48,7 +48,6 @@ function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boo
 
     if (rule !== undefined) {
         rule.symbols.forEach(symbol => {
-            console.log(start, symbol);
             if (typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
                 argbase.push(rr.NonTerminal(symbol));
                 toreturn.push(...traceandgram(rules, symbol, false));
