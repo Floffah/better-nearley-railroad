@@ -12,6 +12,8 @@ program
 
 program
     .command("reference <type>")
+    .option("-p, --prettify", "Prettify output")
+    .option("-o, --out", "file to write to")
     .action(reference)
 
 program.parse(process.argv);
