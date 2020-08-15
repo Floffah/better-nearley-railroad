@@ -30,13 +30,13 @@ export default function railroad(grammar: any, out: string, opts: any) {
         }
     }
 
-    writeFileSync("./debug.json", JSON.stringify(Array.from(rules.entries()), null, 2));
-
     let diagrams: diagram[] = [];
 
     diagrams.push(...traceandgram(rules, grammar.ParserStart, [], false));
-
-    writeFileSync("./debug.railroad", JSON.stringify(diagrams, null, 2));
+    if (opts.debug) {
+        writeFileSync("./debug.json", JSON.stringify(Array.from(rules.entries()), null, 2));
+        writeFileSync("./debug.railroad", JSON.stringify(diagrams, null, 2));
+    }
 
     let page = m.render(template, {
         name: "Test",
@@ -50,13 +50,13 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
     let toreturn: diagram[] = [];
 
     let rule: parserrule[];
-    if(rules.get(start) === undefined) {
+    if (rules.get(start) === undefined) {
         rule = [];
     } else {
         // @ts-ignore
         rule = rules.get(start);
     }
-    if(sub) {
+    if (sub) {
         rule = [sub];
     }
 
@@ -79,16 +79,16 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                         diagrammed.push(symbol);
                         toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                     }
-                } else if(symbol.type) {
+                } else if (symbol.type) {
                     bits.push(rr.Terminal(symbol.type));
                 }
             }
-        } else if(rule.length > 1) {
-            let bitss:any[] = [];
+        } else if (rule.length > 1) {
+            let bitss: any[] = [];
             rule.forEach((bit: parserrule) => {
-                let topush:any[] = [];
+                let topush: any[] = [];
                 bit.symbols.map((symbol) => {
-                    if(typeof symbol === "string" && /[A-z]\$ebnf\$1/.test(symbol)) {
+                    if (typeof symbol === "string" && /[A-z]\$ebnf\$1/.test(symbol)) {
                         let ebnf = rules.get(symbol);
                         if (ebnf !== undefined) {
                             if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
@@ -101,7 +101,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                             diagrammed.push(symbol);
                             toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                         }
-                    } else if(symbol.type) {
+                    } else if (symbol.type) {
                         topush.push(rr.Terminal(symbol.type));
                     }
                 });

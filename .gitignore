@@ -1,3 +1,6 @@
+test/debug.json
+test/debug.railroad
+
 # Logs
 logs
 *.log

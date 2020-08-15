@@ -10,6 +10,7 @@ program
     .arguments("[grammar.js] [grammar.html]")
     .option("-c, --config <file>", "Path to a json config")
     .option("-t, --template", "Path to a template directory")
+    .option("-d, --debug", "Write files to help debug this command")
     .action(railroad);
 
 program
