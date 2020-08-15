@@ -51,6 +51,7 @@ function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boo
             console.log(start, symbol);
             if (typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
                 argbase.push(rr.NonTerminal(symbol));
+                toreturn.push(...traceandgram(rules, symbol, false));
             } else if (typeof symbol === "string" && /[A-z]\$ebnf\$[0-9]/.test(symbol)) {
                 let path1 = rules.get(`${start}$ebnf$1`);
                 let path2 = rules.get(`${start}$ebnf$1@@1`);
@@ -73,7 +74,7 @@ function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boo
 
     if (!issub) {
         toreturn.push({
-            name: "test",
+            name: start,
             diagram: rr.Diagram(...argbase).toString()
         });
 
