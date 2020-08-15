@@ -64,9 +64,10 @@
 </head>
 <body>
     <div class="railroads">
+        <a href="#{{start}}">Jump to start ({{start}})</a>
         {{#diagrams}}
         <div>
-            <h1>{{name}}</h1>
+            <h1 id="{{name}}">{{name}} <span style="font-weight:300;font-size:20px;">{{comment}}</span></h1>
             {{{diagram}}}
         </div>
         {{/diagrams}}

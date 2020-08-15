@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "reference": "node . reference 1 -p",
-    "test": "cd test && node ../ ../nearley-prebuilt/nearley-language-bootstrapped.js ./grammar.html --config nearleyrailroad.json && cd ../"
+    "test": "cd test && node ../ ../nearley-prebuilt/nearley-language-bootstrapped.js ./grammar.html -c nearleyrailroad.json -d && cd ../"
   },
   "homepage": "https://github.com/Floffah/better-nearley-railroad#readme",
   "bugs": {

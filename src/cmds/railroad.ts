@@ -33,6 +33,11 @@ export default function railroad(grammar: any, out: string, opts: any) {
     let diagrams: diagram[] = [];
 
     diagrams.push(...traceandgram(rules, grammar.ParserStart, [], false));
+
+    diagrams = array_move(diagrams, diagrams.length - 1, 0);
+
+    diagrams[0].comment = "- Start";
+
     if (opts.debug) {
         writeFileSync("./debug.json", JSON.stringify(Array.from(rules.entries()), null, 2));
         writeFileSync("./debug.railroad", JSON.stringify(diagrams, null, 2));
@@ -40,6 +45,7 @@ export default function railroad(grammar: any, out: string, opts: any) {
 
     let page = m.render(template, {
         name: "Test",
+        start: grammar.ParserStart,
         diagrams
     });
 
@@ -124,7 +130,8 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
 
 interface diagram {
     diagram: string,
-    name: string
+    name: string,
+    comment?: string,
 }
 
 interface options {
@@ -145,3 +152,16 @@ export function isJson(data: string): boolean {
     }
     return true;
 }
+
+// VVVVV https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another VVVVV
+export function array_move(arr: any[], old_index: number, new_index: number) {
+    if (new_index >= arr.length) {
+        var k = new_index - arr.length + 1;
+        while (k--) {
+            arr.push(undefined);
+        }
+    }
+    arr.splice(new_index, 0, arr.splice(old_index, 1)[0]);
+    return arr; // for testing
+}
+// ^^^^^ https://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another ^^^^^
