@@ -7,7 +7,9 @@ const program = require('commander');
 
 program
     .version(require('../package.json').version)
-    .arguments("[file.ne] [grammar.html]")
+    .arguments("[grammar.js] [grammar.html]")
+    .option("-c, --config <file>", "Path to a json config")
+    .option("-t, --template", "Path to a template directory")
     .action(railroad);
 
 program

@@ -8,7 +8,8 @@
     "diagrams"
   ],
   "scripts": {
-    "reference": "yarn nearley-test --input \"root -> \\(\\\"hi\\\":?|\\\"bye|\\\"\\)\" nearley-prebuilt/nearley-language-bootstrapped.js"
+    "reference": "node . reference 1 -p",
+    "test": "cd test && node ../ ../nearley-prebuilt/nearley-language-bootstrapped.js ./grammar.html --config nearleyrailroad.json && cd ../"
   },
   "homepage": "https://github.com/Floffah/better-nearley-railroad#readme",
   "bugs": {
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "commander": "^6.0.0",
+    "mustache": "^4.0.1",
     "nearley": "^2.19.5",
     "railroad-diagrams": "^1.0.0"
   },
