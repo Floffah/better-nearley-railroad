@@ -17,19 +17,26 @@ export default function railroad(grammar: any, out: string, opts: any) {
     let template = readFileSync(resolve(settings.template, "index.html"), 'utf8')
 
     grammar = require(resolve(process.cwd(), grammar));
-    let rules: Map<string, parserrule> = new Map();
+    let rules: Map<string, parserrule[]> = new Map();
 
     for (let rule of grammar.ParserRules) {
-        if (rules.has(rule.name)) {
-            rules.set(rule.name + "@@1", rule);
+        if (rules.has(rule.name) && rules.get(rule.name) !== undefined) {
+            // @ts-ignore
+            let oldrules: parserrule[] = rules.get(rule.name);
+            oldrules.push(rule);
+            rules.set(rule.name, oldrules);
         } else {
-            rules.set(rule.name, rule);
+            rules.set(rule.name, [rule]);
         }
     }
 
+    writeFileSync("./debug.json", JSON.stringify(Array.from(rules.entries()), null, 2));
+
     let diagrams: diagram[] = [];
 
-    diagrams.push(...traceandgram(rules, grammar.ParserStart));
+    diagrams.push(...traceandgram(rules, grammar.ParserStart, [], false));
+
+    writeFileSync("./debug.railroad", JSON.stringify(diagrams, null, 2));
 
     let page = m.render(template, {
         name: "Test",
@@ -39,47 +46,79 @@ export default function railroad(grammar: any, out: string, opts: any) {
     writeFileSync(resolve(process.cwd(), out), page);
 }
 
-function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boolean): diagram[] {
+function traceandgram(rules: Map<string, parserrule[]>, start: string, diagrammed: string[], issub?: boolean, sub?: parserrule): diagram[] {
     let toreturn: diagram[] = [];
 
-    let rule = rules.get(start);
-
-    let argbase: any[] = [];
-
-    if (rule !== undefined) {
-        rule.symbols.forEach(symbol => {
-            if (typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
-                argbase.push(rr.NonTerminal(symbol));
-                toreturn.push(...traceandgram(rules, symbol, false));
-            } else if (typeof symbol === "string" && /[A-z]\$ebnf\$[0-9]/.test(symbol)) {
-                let path1 = rules.get(`${start}$ebnf$1`);
-                let path2 = rules.get(`${start}$ebnf$1@@1`);
-                if (path1 !== undefined && path2 !== undefined) {
-                    if (path1.symbols.length > 0 && path2.symbols.length > 0) {
-                        argbase.push(rr.Choice(0, rr.Sequence(...traceandgram(rules, path1.name, true)), rr.Sequence(...traceandgram(rules, path2.name, true))));
-                        console.log(path1, path2);
-                    } else if(path1.symbols.length > 0 && path2.symbols.length === 0) {
-                        argbase.push(rr.Optional(rr.Sequence(...traceandgram(rules, path1.name, true))));
-                    }
-                }
-            } else { // @ts-ignore
-                if (typeof symbol !== "string" && symbol.type) {
-                    // @ts-ignore
-                    argbase.push(rr.NonTerminal("(lexer) " + symbol.type));
-                }
-            }
-        })
+    let rule: parserrule[];
+    if(rules.get(start) === undefined) {
+        rule = [];
+    } else {
+        // @ts-ignore
+        rule = rules.get(start);
+    }
+    if(sub) {
+        rule = [sub];
     }
 
-    if (!issub) {
+    let bits: any[] = [];
+
+    if (rule !== undefined) {
+        if (rule.length === 1) {
+            let bit = rule[0];
+            for (let symbol of bit.symbols) {
+                if (typeof symbol === "string" && /[A-z]\$ebnf\$1/.test(symbol)) {
+                    let ebnf = rules.get(symbol);
+                    if (ebnf !== undefined) {
+                        if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
+                            bits.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                        }
+                    }
+                } else if (typeof symbol === "string") {
+                    bits.push(rr.NonTerminal(symbol));
+                    if (!diagrammed.includes(symbol) && rules.has(symbol)) {
+                        diagrammed.push(symbol);
+                        toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                    }
+                } else if(symbol.type) {
+                    bits.push(rr.Terminal(symbol.type));
+                }
+            }
+        } else if(rule.length > 1) {
+            let bitss:any[] = [];
+            rule.forEach((bit: parserrule) => {
+                let topush:any[] = [];
+                bit.symbols.map((symbol) => {
+                    if(typeof symbol === "string" && /[A-z]\$ebnf\$1/.test(symbol)) {
+                        let ebnf = rules.get(symbol);
+                        if (ebnf !== undefined) {
+                            if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
+                                topush.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                            }
+                        }
+                    } else if (typeof symbol === "string") {
+                        topush.push(rr.NonTerminal(symbol));
+                        if (!diagrammed.includes(symbol) && rules.has(symbol)) {
+                            diagrammed.push(symbol);
+                            toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                        }
+                    } else if(symbol.type) {
+                        topush.push(rr.Terminal(symbol.type));
+                    }
+                });
+                bitss.push(rr.Sequence(...topush));
+            });
+            bits.push(rr.Choice(0, ...bitss));
+        }
+    }
+
+    if (issub) {
+        return bits;
+    } else {
         toreturn.push({
             name: start,
-            diagram: rr.Diagram(...argbase).toString()
-        });
-
+            diagram: rr.Diagram(...bits).toString(),
+        })
         return toreturn;
-    } else {
-        return argbase;
     }
 }
 
@@ -94,7 +133,7 @@ interface options {
 
 interface parserrule {
     name: string,
-    symbols: (string | boolean | { type: string })[],
+    symbols: (string | { type: string })[],
     postprocess: (d: string[]) => any
 }
 
