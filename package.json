@@ -1,0 +1,38 @@
+{
+  "name": "better-nearley-railroad",
+  "version": "1.0.0",
+  "description": "An alternative to the built in nearley-railroad that is recursive and allows for templates. ",
+  "keywords": [
+    "nearley",
+    "railroad",
+    "diagrams"
+  ],
+  "scripts": {
+    "reference": "yarn nearley-test --input \"root -> \\(\\\"hi\\\":?|\\\"bye|\\\"\\)\" nearley-prebuilt/nearley-language-bootstrapped.js"
+  },
+  "homepage": "https://github.com/Floffah/better-nearley-railroad#readme",
+  "bugs": {
+    "url": "https://github.com/Floffah/better-nearley-railroad/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Floffah/better-nearley-railroad.git"
+  },
+  "license": "MIT",
+  "author": "Floffah",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "nearley-rr": "dist/index.js"
+  },
+  "dependencies": {
+    "commander": "^6.0.0",
+    "nearley": "^2.19.5",
+    "railroad-diagrams": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/nearley": "^2.11.1",
+    "@types/node": "^14.0.27",
+    "typescript": "^3.9.7"
+  }
+}
