@@ -65,7 +65,7 @@ function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boo
             } else { // @ts-ignore
                 if (typeof symbol !== "string" && symbol.type) {
                     // @ts-ignore
-                    argbase.push(rr.NonTerminal(symbol.type));
+                    argbase.push(rr.NonTerminal("(lexer) " + symbol.type));
                 }
             }
         })
