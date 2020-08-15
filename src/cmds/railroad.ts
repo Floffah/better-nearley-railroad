@@ -39,27 +39,48 @@ export default function railroad(grammar: any, out: string, opts: any) {
     writeFileSync(resolve(process.cwd(), out), page);
 }
 
-function traceandgram(rules: Map<string, parserrule>, start: string): diagram[] {
+function traceandgram(rules: Map<string, parserrule>, start: string, issub?: boolean): diagram[] {
     let toreturn: diagram[] = [];
 
-    // @ts-ignore
     let rule = rules.get(start);
 
     let argbase: any[] = [];
 
-    // @ts-ignore
-    rule.symbols.forEach(symbol => {
-        if(typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
-            argbase.push(rr.NonTerminal(symbol));
-        }
-    })
+    if (rule !== undefined) {
+        rule.symbols.forEach(symbol => {
+            console.log(start, symbol);
+            if (typeof symbol === "string" && !/[A-z]\$ebnf\$[0-9]/.test(symbol)) {
+                argbase.push(rr.NonTerminal(symbol));
+            } else if (typeof symbol === "string" && /[A-z]\$ebnf\$[0-9]/.test(symbol)) {
+                let path1 = rules.get(`${start}$ebnf$1`);
+                let path2 = rules.get(`${start}$ebnf$1@@1`);
+                if (path1 !== undefined && path2 !== undefined) {
+                    if (path1.symbols.length > 0 && path2.symbols.length > 0) {
+                        argbase.push(rr.Choice(0, rr.Sequence(...traceandgram(rules, path1.name, true)), rr.Sequence(...traceandgram(rules, path2.name, true))));
+                        console.log(path1, path2);
+                    } else if(path1.symbols.length > 0 && path2.symbols.length === 0) {
+                        argbase.push(rr.Optional(rr.Sequence(...traceandgram(rules, path1.name, true))));
+                    }
+                }
+            } else { // @ts-ignore
+                if (typeof symbol !== "string" && symbol.type) {
+                    // @ts-ignore
+                    argbase.push(rr.NonTerminal(symbol.type));
+                }
+            }
+        })
+    }
 
-    toreturn.push({
-        name: "test",
-        diagram: rr.Diagram(...argbase).toString()
-    });
+    if (!issub) {
+        toreturn.push({
+            name: "test",
+            diagram: rr.Diagram(...argbase).toString()
+        });
 
-    return toreturn;
+        return toreturn;
+    } else {
+        return argbase;
+    }
 }
 
 interface diagram {
@@ -73,12 +94,8 @@ interface options {
 
 interface parserrule {
     name: string,
-    symbols: (string | boolean | symboltype)[],
+    symbols: (string | boolean | { type: string })[],
     postprocess: (d: string[]) => any
-}
-
-interface symboltype {
-    type: string
 }
 
 export function isJson(data: string): boolean {
