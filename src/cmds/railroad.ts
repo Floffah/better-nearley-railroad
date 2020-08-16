@@ -1,4 +1,4 @@
-import {readFileSync, writeFileSync} from "fs";
+import {existsSync, readFileSync, writeFileSync} from "fs";
 import {resolve} from 'path';
 
 const rr = require('railroad-diagrams');
@@ -11,7 +11,17 @@ export default function railroad(grammar: any, out: string, opts: any) {
     }
 
     settings = {
-        template: settings.template || "../template"
+        template: settings.template || resolve(__dirname, "../../template")
+    }
+
+    if(!existsSync(resolve(process.cwd(), grammar))) {
+        console.log(`${resolve(process.cwd(), grammar)} does not exist. Please make sure you are passing the correct path to your grammar file.`);
+        process.exit(1);
+    }
+
+    if(!existsSync(resolve(settings.template, "index.html"))) {
+        console.log(`${resolve(settings.template, "index.html")} does not exist. Please make sure you are passing the correct path to your grammar file.`);
+        process.exit(1);
     }
 
     let template = readFileSync(resolve(settings.template, "index.html"), 'utf8')
