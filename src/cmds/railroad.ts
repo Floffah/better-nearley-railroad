@@ -86,7 +86,30 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                     let ebnf = rules.get(symbol);
                     if (ebnf !== undefined) {
                         if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
+                            ebnf[0].symbols.forEach((symbol) => {
+                                if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
+                                    toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                }
+                            });
                             bits.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                        } else if(ebnf[0].symbols[0] === ebnf[1].symbols[1] && ebnf[1].symbols[0] === ebnf[0].name) {
+                            ebnf[0].symbols.forEach((symbol) => {
+                                if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
+                                    toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                }
+                            });
+                            bits.push(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                        }
+                    }
+                } else if(typeof symbol === "string" && /[A-z]\$subexpression\$1/.test(symbol)) {
+                    let ebnf = rules.get(symbol);
+                    if(ebnf !== undefined) {
+                        if(ebnf[0].symbols.length > 0 && ebnf[1].symbols.length > 0) {
+                            let subchoices:any[] = [];
+                            ebnf.forEach((value) => {
+                                subchoices.push(rr.Choice(0, ...traceandgram(rules, "", diagrammed, true, value)));
+                            });
+                            bits.push(rr.Sequence(...subchoices));
                         }
                     }
                 } else if (typeof symbol === "string") {
@@ -110,7 +133,30 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                         let ebnf = rules.get(symbol);
                         if (ebnf !== undefined) {
                             if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
+                                ebnf[0].symbols.forEach((symbol) => {
+                                    if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
+                                        toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                    }
+                                });
                                 topush.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                            } else if(ebnf[0].symbols[0] === ebnf[1].symbols[1] && ebnf[1].symbols[0] === ebnf[0].name) {
+                                ebnf[0].symbols.forEach((symbol) => {
+                                    if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
+                                        toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                    }
+                                });
+                                topush.push(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
+                            }
+                        }
+                    } else if(typeof symbol === "string" && /[A-z]\$subexpression\$1/.test(symbol)) {
+                        let ebnf = rules.get(symbol);
+                        if(ebnf !== undefined) {
+                            if(ebnf[0].symbols.length > 0 && ebnf[1].symbols.length > 0) {
+                                let subchoices:any[] = [];
+                                ebnf.forEach((value) => {
+                                    subchoices.push(rr.Choice(0, ...traceandgram(rules, "", diagrammed, true, value)));
+                                });
+                                topush.push(rr.Sequence(...subchoices));
                             }
                         }
                     } else if (typeof symbol === "string") {
