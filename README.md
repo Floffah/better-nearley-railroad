@@ -1,4 +1,4 @@
-# better-nearley-
+# better-nearley-railroad
 An alternative to the built in nearley-railroad that is recursive and allows for templates.
 
 1. [How to use](#how-to-use)
