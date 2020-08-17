@@ -4,6 +4,8 @@ import {resolve} from 'path';
 const rr = require('railroad-diagrams');
 const m = require('mustache');
 
+let dodebug:boolean = false;
+
 export default function railroad(grammar: any, out: string, opts: any) {
     let settings: options = opts;
     if (opts.config && isJson(readFileSync(resolve(process.cwd(), opts.config), "utf8"))) {
@@ -29,6 +31,10 @@ export default function railroad(grammar: any, out: string, opts: any) {
     grammar = require(resolve(process.cwd(), grammar));
     let rules: Map<string, parserrule[]> = new Map();
 
+    if(opts.debug) {
+        dodebug = true;
+    }
+
     for (let rule of grammar.ParserRules) {
         if (rules.has(rule.name) && rules.get(rule.name) !== undefined) {
             // @ts-ignore
@@ -48,18 +54,22 @@ export default function railroad(grammar: any, out: string, opts: any) {
 
     diagrams[0].comment = "- Start";
 
-    if (opts.debug) {
-        writeFileSync("./debug.json", JSON.stringify(Array.from(rules.entries()), null, 2));
-        writeFileSync("./debug.railroad", JSON.stringify(diagrams, null, 2));
+    let rulekeys: string[] = [];
+
+    for(let rule of rules.keys()) {
+        rulekeys.push(rule);
     }
 
     let page = m.render(template, {
         name: "Test",
         start: grammar.ParserStart,
-        diagrams
+        diagrams,
+        ruleslist: JSON.stringify(rulekeys)
     });
 
     writeFileSync(resolve(process.cwd(), out), page);
+
+    console.log("Done!");
 }
 
 function traceandgram(rules: Map<string, parserrule[]>, start: string, diagrammed: string[], issub?: boolean, sub?: parserrule): diagram[] {
@@ -79,6 +89,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
     let bits: any[] = [];
 
     if (rule !== undefined) {
+        if(dodebug) console.log(`Scanning rule "${start}"...`);
         if (rule.length === 1) {
             let bit = rule[0];
             for (let symbol of bit.symbols) {
@@ -86,16 +97,20 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                     let ebnf = rules.get(symbol);
                     if (ebnf !== undefined) {
                         if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
-                            ebnf[0].symbols.forEach((symbol) => {
-                                if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
-                                    toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                            if(dodebug) console.log(`Rule "${symbol}" is an optional ebnf rule`);
+                            ebnf[0].symbols.forEach((symboll) => {
+                                if(typeof symboll === "string" && !diagrammed.includes(symboll) && rules.has(symboll)) {
+                                    if(dodebug) console.log(`Came across new rule "${symboll}" in rule "${symbol}"`);
+                                    toreturn.push(...traceandgram(rules, symboll, diagrammed, false));
                                 }
                             });
                             bits.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
                         } else if(ebnf[0].symbols[0] === ebnf[1].symbols[1] && ebnf[1].symbols[0] === ebnf[0].name) {
-                            ebnf[0].symbols.forEach((symbol) => {
-                                if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
-                                    toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                            if(dodebug) console.log(`Rule "${symbol}" is a loop ebnf rule`);
+                            ebnf[0].symbols.forEach((symboll) => {
+                                if(typeof symboll === "string" && !diagrammed.includes(symboll) && rules.has(symboll)) {
+                                    if(dodebug) console.log(`Came across new rule "${symboll}" in rule "${symbol}"`);
+                                    toreturn.push(...traceandgram(rules, symboll, diagrammed, false));
                                 }
                             });
                             bits.push(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
@@ -104,6 +119,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                 } else if(typeof symbol === "string" && /[A-z]\$subexpression\$1/.test(symbol)) {
                     let ebnf = rules.get(symbol);
                     if(ebnf !== undefined) {
+                        if(dodebug) console.log(`Rule "${symbol}" is a subexpression`);
                         if(ebnf[0].symbols.length > 0 && ebnf[1].symbols.length > 0) {
                             let subchoices:any[] = [];
                             ebnf.forEach((value) => {
@@ -113,14 +129,17 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                         }
                     }
                 } else if (typeof symbol === "string") {
+                    if(dodebug) console.log(`Rule "${symbol}" is a non-terminal string`);
                     bits.push(rr.NonTerminal(symbol));
                     if (!diagrammed.includes(symbol) && rules.has(symbol)) {
                         diagrammed.push(symbol);
                         toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                     }
                 } else if (symbol.type) {
-                    bits.push(rr.NonTerminal(symbol.type + " (lexer)"));
+                    if(dodebug) console.log(`Rule "${symbol.type}" is a non-terminal lexer value`);
+                    bits.push(rr.NonTerminal("%" + symbol.type));
                 } else if(symbol.literal) {
+                    if(dodebug) console.log(`Rule "${symbol.literal}" is terminal/literal`);
                     bits.push(rr.Terminal(symbol.literal));
                 }
             }
@@ -133,16 +152,20 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                         let ebnf = rules.get(symbol);
                         if (ebnf !== undefined) {
                             if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
-                                ebnf[0].symbols.forEach((symbol) => {
-                                    if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
-                                        toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                if(dodebug) console.log(`Rule "${symbol}" is an optional ebnf rule`);
+                                ebnf[0].symbols.forEach((symboll) => {
+                                    if(typeof symboll === "string" && !diagrammed.includes(symboll) && rules.has(symboll)) {
+                                        if(dodebug) console.log(`Came across new rule "${symboll}" in rule "${symbol}"`);
+                                        toreturn.push(...traceandgram(rules, symboll, diagrammed, false));
                                     }
                                 });
                                 topush.push(rr.Optional(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
                             } else if(ebnf[0].symbols[0] === ebnf[1].symbols[1] && ebnf[1].symbols[0] === ebnf[0].name) {
-                                ebnf[0].symbols.forEach((symbol) => {
-                                    if(typeof symbol === "string" && !diagrammed.includes(symbol) && rules.has(symbol)) {
-                                        toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
+                                if(dodebug) console.log(`Rule "${symbol}" is a loop ebnf rule`);
+                                ebnf[0].symbols.forEach((symboll) => {
+                                    if(typeof symboll === "string" && !diagrammed.includes(symboll) && rules.has(symboll)) {
+                                        if(dodebug) console.log(`Came across new rule "${symboll}" in rule "${symbol}"`);
+                                        toreturn.push(...traceandgram(rules, symboll, diagrammed, false));
                                     }
                                 });
                                 topush.push(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, ebnf[0]))));
@@ -151,6 +174,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                     } else if(typeof symbol === "string" && /[A-z]\$subexpression\$1/.test(symbol)) {
                         let ebnf = rules.get(symbol);
                         if(ebnf !== undefined) {
+                            if(dodebug) console.log(`Rule "${symbol}" is a subexpression`);
                             if(ebnf[0].symbols.length > 0 && ebnf[1].symbols.length > 0) {
                                 let subchoices:any[] = [];
                                 ebnf.forEach((value) => {
@@ -160,14 +184,17 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                             }
                         }
                     } else if (typeof symbol === "string") {
+                        if(dodebug) console.log(`Rule "${symbol}" is a non-terminal string`);
                         topush.push(rr.NonTerminal(symbol));
                         if (!diagrammed.includes(symbol) && rules.has(symbol)) {
                             diagrammed.push(symbol);
                             toreturn.push(...traceandgram(rules, symbol, diagrammed, false));
                         }
                     } else if (symbol.type) {
-                        topush.push(rr.NonTerminal(symbol.type + " (lexer)"));
+                        if(dodebug) console.log(`Rule "${symbol.type}" is a non-terminal lexer value`);
+                        topush.push(rr.NonTerminal("%" + symbol.type));
                     } else if(symbol.literal) {
+                        if(dodebug) console.log(`Rule "${symbol.literal}" is terminal/literal`);
                         topush.push(rr.Terminal(symbol.literal));
                     }
                 });

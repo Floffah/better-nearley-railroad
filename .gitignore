@@ -1,6 +1,7 @@
 test/debug.json
 test/debug.railroad
 test/grammar.html
+test/index.html
 
 # Logs
 logs

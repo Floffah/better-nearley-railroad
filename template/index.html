@@ -66,6 +66,7 @@
     <div class="railroads">
         <a href="#{{start}}">Jump to start ({{start}})</a>
         <p>The diagrams are in order from the entry rule to the last rule found</p>
+        <p>Please note this is the default template. You can make this more pretty but making your own templates.</p>
         {{#diagrams}}
         <div>
             <h1 id="{{name}}">{{name}} <span style="font-weight:300;font-size:20px;">{{comment}}</span></h1>
@@ -73,5 +74,8 @@
         </div>
         {{/diagrams}}
     </div>
+    <script>
+        let rules = {{{ruleslist}}};
+    </script>
 </body>
 </html>

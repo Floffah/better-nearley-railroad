@@ -1,6 +1,6 @@
 {
   "name": "better-nearley-railroad",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "An alternative to the built in nearley-railroad that is recursive and allows for templates. ",
   "keywords": [
     "nearley",
