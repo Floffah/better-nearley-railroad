@@ -7,6 +7,10 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Test</title>
     <style>
+        #root-link {
+            position: fixed;
+            right: 2em;
+        }
         svg.railroad-diagram {
             background-color: hsl(30,20%,95%);
         }
@@ -64,9 +68,9 @@
 </head>
 <body>
     <div class="railroads">
-        <a href="#final">Jump to start (final)</a>
+        <a id="root-link" href="#final">Jump to start (final)</a>
         <p>The diagrams are in order from the entry rule to the last rule found</p>
-		<p>Please be aware this was generated using the default template but you can make your own templates that are much more pretty</p>
+        <p>Please note this is the default template. You can make this more pretty but making your own templates.</p>
         <div>
             <h1 id="final">final <span style="font-weight:300;font-size:20px;">- Start</span></h1>
             <svg class="railroad-diagram" width="353" height="72" viewBox="0 0 353 72">

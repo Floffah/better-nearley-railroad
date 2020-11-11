@@ -93,7 +93,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
         if (rule.length === 1) {
             let bit = rule[0];
             for (let symbol of bit.symbols) {
-                if (typeof symbol === "string" && /[A-z]\$ebnf\$[0-9][0-9]?/.test(symbol)) {
+                if (typeof symbol === "string" && /[A-z]+\$ebnf\$[0-9]+/.test(symbol)) {
                     let ebnf = rules.get(symbol);
                     if (ebnf !== undefined) {
                         if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
@@ -127,7 +127,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                             bits.push(rr.Optional(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, copy)))));
                         }
                     }
-                } else if(typeof symbol === "string" && /[A-z]\$subexpression\$[0-9][0-9]?/.test(symbol)) {
+                } else if(typeof symbol === "string" && /[A-z]+\$subexpression\$[0-9]+/.test(symbol)) {
                     let ebnf = rules.get(symbol);
                     if(ebnf !== undefined) {
                         if(dodebug) console.log(`Rule "${symbol}" is a subexpression`);
@@ -159,7 +159,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
             rule.forEach((bit: parserrule) => {
                 let topush: any[] = [];
                 bit.symbols.map((symbol) => {
-                    if (typeof symbol === "string" && /[A-z]\$ebnf\$[0-9][0-9]?/.test(symbol)) {
+                    if (typeof symbol === "string" && /[A-z]+\$ebnf\$[0-9]+/.test(symbol)) {
                         let ebnf = rules.get(symbol);
                         if (ebnf !== undefined) {
                             if (ebnf[0].symbols.length > 0 && ebnf[1].symbols.length === 0) {
@@ -193,7 +193,7 @@ function traceandgram(rules: Map<string, parserrule[]>, start: string, diagramme
                                 bits.push(rr.Optional(rr.OneOrMore(rr.Sequence(...traceandgram(rules, ebnf[0].name, diagrammed, true, copy)))));
                             }
                         }
-                    } else if(typeof symbol === "string" && /[A-z]\$subexpression\$[0-9][0-9]?/.test(symbol)) {
+                    } else if(typeof symbol === "string" && /[A-z]+\$subexpression\$[0-9]+/.test(symbol)) {
                         let ebnf = rules.get(symbol);
                         if(ebnf !== undefined) {
                             if(dodebug) console.log(`Rule "${symbol}" is a subexpression`);
